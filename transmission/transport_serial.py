@@ -106,7 +106,8 @@ class SerialTransport(common.Transport):
                 xonxoff=0, # disable software flow control
                 rtscts=0, # disable RTS/CTS flow control
                 )
-        ser.open()
+	if ser.isOpen() == False:
+	        ser.open()
         # 8< got that from somwhere, not sure what it does:
         ser.setRTS(1)
         ser.setDTR(1)
