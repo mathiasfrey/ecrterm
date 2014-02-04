@@ -1,0 +1,38 @@
+# preamble.
+from ecrterm import ecr
+e = ecr.ECR('/dev/ttyUSB0')
+
+###############################################################################
+e.daylog_template = """
+   ** KASSENSCHNITT **
+TEST 123.
+
+Rechnungen: #%(receipt-number-start)s-%(receipt-number-end)s
+Terminal-ID:    %(terminal-id)s
+%(date)s %(time)s
+
+       Anzahl        EUR
+VISA
+            %(number-visa)s       %(float-visa)s
+JCB
+            %(number-jcb)s    %(float-jcb)s
+American Express
+            %(number-amex)s    %(float-amex)s
+Diners Club
+            %(number-diners)s    %(float-diners)s
+EuroCard
+            %(number-eurocard)s    %(float-eurocard)s
+Maestro
+            %(number-ec-card)s    %(float-ec-card)s
+Remaining
+            %(number-remaining)s    %(float-remaining)s
+------------------------
+Gesamt     %(number-total)s    %(float-amount)s
+
+"""
+###############################################################################
+
+# printing what the new eod would bring:
+e.register()
+eod_info = e._end_of_day_info_packet()
+print e.daylog_template % eod_info
