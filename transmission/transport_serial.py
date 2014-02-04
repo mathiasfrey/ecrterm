@@ -106,8 +106,8 @@ class SerialTransport(common.Transport):
                 xonxoff=0, # disable software flow control
                 rtscts=0, # disable RTS/CTS flow control
                 )
-	if ser.isOpen() == False:
-	        ser.open()
+        if ser.isOpen() == False:
+            ser.open()
         # 8< got that from somwhere, not sure what it does:
         ser.setRTS(1)
         ser.setDTR(1)
@@ -257,6 +257,10 @@ class SerialTransport(common.Transport):
                 #    return self.send_message(message, tries + 1, no_answer)
                 #else:
                 raise common.TransportLayerException, "Could not send message"
+            elif not acknowledge:
+                # this happens quite a lot with the ingenico devices.
+                # possibly a workaround would be nice.
+                raise common.TransportLayerException, "No Answer, Possible Timeout"
             else:
                 raise common.TransportLayerException, "Unknown Acknowledgmenet Byte %s" % conv.bs2hl(acknowledge)
 

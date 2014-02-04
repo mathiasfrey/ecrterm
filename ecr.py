@@ -12,7 +12,7 @@ from ecrterm import common, conv
 from ecrterm.packets import *
 from ecrterm import transmission
 from ecrterm.transmission.signals import *
-import time, sys
+import time, sys, logging
 from ecrterm.common import TERMINAL_STATUS_CODES
 
 class A(object):
@@ -112,6 +112,7 @@ class ECR(object):
     transmitter = None
     transport = None
     version = None
+    terminal_id = None
     MAX_TEXT_LINES = 4
     _state_registered = None
     _state_connected = None
@@ -133,7 +134,9 @@ class ECR(object):
         self.transport = transmission.SerialTransport(device)
         #self.transport.slog = ecr_log
         self.daylog = []
+        self.daylog_template = ''
         self.history = []
+        self.terminal_id = None
         # we save some states here.
         self._state_registered = False
         self._state_connected = False
@@ -150,7 +153,15 @@ class ECR(object):
             for real world conditions.
         """
         ret = self.transmit(Registration())
+        
         if ret == TRANSMIT_OK:
+            # get the terminal-id if its there.
+            for inc, packet in self.transmitter.last_history:
+                if inc and isinstance(packet, Completion):
+                    if 'tid' in packet.bitmaps_as_dict().keys():
+                        self.terminal_id = packet.bitmaps_as_dict()\
+                                            .get('tid', BCD(0)).value()
+            # remember this.
             self._state_registered = True
         return ret
 
@@ -167,6 +178,25 @@ class ECR(object):
         if ret == TRANSMIT_OK:
             self._state_registered = True
         return ret
+    
+    def _end_of_day_info_packet(self, history=None):
+        '''
+            search for an end of day packet status information in the last packets
+            can also search in any history list.
+        '''
+        # helper function to scan for end of day information via packets.
+        status_info = None
+        plist = history or self.transmitter.last_history
+        for inc, packet in plist:
+            if inc: # incoming
+                if isinstance(packet, StatusInformation):
+                    status_info = packet
+        if status_info:
+            eod_info = status_info.get_end_of_day_information()
+            # we add terminal id to it.
+            eod_info['terminal-id'] = self.terminal_id
+            return eod_info
+
 
     def end_of_day(self):
         """
@@ -181,11 +211,22 @@ class ECR(object):
         result = self.transmit(EndOfDay())
         # now save the log
         self.daylog = self.last_printout()
+        
+        if not self.daylog:
+            # there seems to be no printout. we search in statusinformation.
+            eod_info = self._end_of_day_info_packet()
+            try:
+                self.daylog = (self.daylog_template % eod_info).split('\n')
+            except:
+                import traceback
+                traceback.print_exc()
+                logging.error('Error in Daylog Template')
         return result
 
     def last_printout(self):
         """
             returns all printlines from the last history.
+            @todo: TextBlock support - if some printer decides to do it that way.
         """
         printout = []
         for entry in self.transmitter.last_history:

@@ -247,6 +247,11 @@ class FixedLength(BMP):
 # two simple classes (BCD and BYTE)
 class BCD(FixedLength):
     @classmethod
+    def as_int(cls, a_list):
+        ''' represent a bcd list as integer '''
+        return int(''.join([str(a) for a in a_list]))
+    
+    @classmethod
     def bcd_split(cls, b):
         """ splits a bcd byte into a tuple of numbers """
         return ((b & 0xF0) >> 4, (b & 0x0F))
