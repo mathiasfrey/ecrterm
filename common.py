@@ -318,5 +318,8 @@ class ZVTException(Exception):
 class TransportLayerException(ZVTException):
     pass
 
+class TransportTimeoutException(TransportLayerException):
+    pass
+
 class ApplicationLayerException(ZVTException):
     pass

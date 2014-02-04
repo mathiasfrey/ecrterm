@@ -260,7 +260,7 @@ class SerialTransport(common.Transport):
             elif not acknowledge:
                 # this happens quite a lot with the ingenico devices.
                 # possibly a workaround would be nice.
-                raise common.TransportLayerException, "No Answer, Possible Timeout"
+                raise common.TransportTimeoutException, "No Answer, Possible Timeout"
             else:
                 raise common.TransportLayerException, "Unknown Acknowledgmenet Byte %s" % conv.bs2hl(acknowledge)
 
