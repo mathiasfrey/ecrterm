@@ -95,7 +95,7 @@ class Registration(Packet):
     cmd_instr = 0x0
     fixed_arguments = ['password', 'config_byte', 'cc']
     fixed_values = {'password': '123456',
-                    'config_byte': 0xBA,
+                    'config_byte': 0xBE,
                     'cc': Packets.CC_EUR}
     wait_for_completion = True
 
