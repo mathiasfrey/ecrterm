@@ -29,7 +29,7 @@ class Packet(APDUPacket):
                                    introspection)
 
     def _handle_unknown_response(self, response, tm):
-        print "Unknown packet response %s" % response
+        print("Unknown packet response %s" % response)
         tm.send_received()
         return False
 
@@ -102,15 +102,15 @@ class Registration(Packet):
     def validate(self):
         # look thru all arguments: all needed fixed arguments here?
         if len(self.fixed_values) < 2:
-            raise Exception, "Registration Packet needs passwort and config_byte at least"
+            raise Exception("Registration Packet needs passwort and config_byte at least")
         elif len(self.fixed_values) < 3 and len(self.bitmaps) > 0:
-            raise Exception, "Registration Packet needs CC if you add a bitmap"
+            raise Exception("Registration Packet needs CC if you add a bitmap")
         # look thru all bitmaps: all bitmaps allowed?
         return True
 
     def consume_fixed(self, data, length):
         if length < 4:
-            raise Exception, "Registration needs at least 4 bytes."
+            raise Exception("Registration needs at least 4 bytes.")
         if length >= 4:
             # only password and byte
             # no cc
@@ -150,7 +150,7 @@ class Registration(Packet):
         if ecr_intermediate_status:
             ret |= 0x8
         else:
-            print "Note: intermediate status not requested, but mandatory in CardComplete Terminals"
+            print("Note: intermediate status not requested, but mandatory in CardComplete Terminals")
         if ecr_controls_payment:
             ret |= 0x10
         # 0010 0000
@@ -522,7 +522,7 @@ class PrintTextBlock(Packet):
         """
             we just print the data for now
         """
-        print data
+        print(data)
         return data
 Packets.register(PrintTextBlock)
 
@@ -536,7 +536,7 @@ class Diagnosis(Packet):
 
     def _handle_response(self, response, tm):
         if isinstance(response, PrintLine):
-            print response._data
+            print(response._data)
             tm.send_received()
             return False
 Packets.register(Diagnosis)

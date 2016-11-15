@@ -4,9 +4,16 @@
     
 """
 from logging import debug
+import sys
 from ecrterm import conv
-from ecrterm.packets.bmp import BMP, LVAR, LLVAR
+from ecrterm.packets.bmp import BMP, int_word_split
 from ecrterm.packets.bitmaps import BITMAPS_ARGS
+from ecrterm.utils import is_stringlike
+
+
+if sys.version_info[0] == 2:
+    range = xrange
+
 
 class _PacketRegister:
     """
@@ -50,7 +57,7 @@ class _PacketRegister:
 
     def detect(self, datastream):
         # detects which class to use.
-        if isinstance(datastream, basestring):
+        if is_stringlike(datastream):
             # lets convert our string into a bytelist.
             datastream = conv.toBytes(datastream[:2])
         # read the first two bytes of the stream.
@@ -132,7 +139,7 @@ class APDUPacket(object):
         l = len(data)
         if l > 254:
             if l > 65535:
-                raise NotImplementedError, "APDU Data length cannot be bigger than 2 bytes."
+                raise NotImplementedError("APDU Data length cannot be bigger than 2 bytes.")
             return [ 0xFF, ] + int_word_split(l)
         return [ l ]
 
@@ -147,10 +154,10 @@ class APDUPacket(object):
         ds = []
         if self.fixed_arguments and self.fixed_values:
             # we have fixed arguments here
-            for i in xrange(len(self.fixed_arguments)):
+            for i in range(len(self.fixed_arguments)):
                 val = self.fixed_values.get(self.fixed_arguments[i], None)
                 if val:
-                    if isinstance(val, basestring):
+                    if is_stringlike(val):
                         val = conv.toBytes(val)
                     elif isinstance(val, list):
                         pass
@@ -222,7 +229,7 @@ class APDUPacket(object):
         if len(blob) >= pos + l:
             data = blob[pos:pos + l]
         else:
-            raise self.NotEnoughData, "Not enough Data to create the packet data."
+            raise self.NotEnoughData("Not enough Data to create the packet data.")
         # step 1: fixed arguments.
         ## if this packet has some fixed arguments, they have to be
         ## parsed first.
@@ -236,7 +243,7 @@ class APDUPacket(object):
 
     @classmethod
     def parse(cls, blob=""):
-        if isinstance(blob, basestring):
+        if is_stringlike(blob):
             # lets convert our string into a bytelist.
             blob = conv.toBytes(blob)
         if isinstance(blob, list):

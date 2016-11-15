@@ -57,7 +57,7 @@ class TestParsingMechanisms(unittest.TestCase):
             rep = parse_represented_data(packet)
             logging.info(rep)
             if not isinstance(rep, Packet):
-                raise AssertionError, "Packet could not be parsed: #%s" % i
+                raise AssertionError("Packet could not be parsed: #%s" % i)
             i += 1
 
 if __name__ == '__main__':

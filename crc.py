@@ -3,13 +3,19 @@
     CRC Funktionen
 
 """
+import sys
+
+if sys.version_info[0] == 2:
+    range = xrange
+
+
 
 def build_codetable(poly):
     """
         builds an ascii codetable for a polynome to be used by a crc checksum
     """
     crc_table = []
-    for i in xrange(256):
+    for i in range(256):
         crc = i
         for j in range(1, 9):
             if (crc & 1) == 1:

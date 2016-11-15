@@ -5,8 +5,15 @@
     Each variable in the protocol is saved into a bitmap.
 
 """
+import struct
+import sys
+
 from ecrterm.common import Dumpling
 from ecrterm import conv
+from ecrterm.utils import is_stringlike
+
+if sys.version_info[0] == 2:
+    range = xrange
 
 def int_word_split(x, endian='>'): # default big endian.
     """ splits 2byte integer (sometimes called a word) into 2 byte list"""
@@ -27,7 +34,7 @@ class BMPFactory(Dumpling):
 
     @classmethod
     def FormatTLV(cls,):
-        from tlv import TLV
+        from ecrterm.packets.tlv import TLV
         return TLV
 
     @classmethod
@@ -43,7 +50,7 @@ class BMPFactory(Dumpling):
         """
             returns a tuple, containing a bitmap and the rest of the stream.
         """
-        from bitmaps import BITMAPS
+        from ecrterm.packets.bitmaps import BITMAPS
         # the first byte of the stream is the bitmap type
         bitmap_type = data[0]
         data = data[1:]
@@ -55,7 +62,7 @@ class BMPFactory(Dumpling):
         bmp._key = bmp_key
         rest = bmp.parse(data)
         if len(rest) and (len(rest) == len(data)):
-            raise NotImplemented, "Bitmap Class without parsing mechanism detected"
+            raise NotImplemented("Bitmap Class without parsing mechanism detected")
         return bmp, rest
 
 class BMP(BMPFactory):
@@ -143,7 +150,7 @@ class LVAR(BMP):
     _data = []
 
     def __init__(self, data=None):
-        if isinstance(data, basestring):
+        if is_stringlike(data):
             self._data = conv.bs2hl(data)
             self._rangecheck()
         else:
@@ -158,7 +165,7 @@ class LVAR(BMP):
         if self.LL:
             line = self._data
             if len(str(len(str(line)))) > self.LL:
-                raise IndexError, "Line too long (%s): %s" % (len(line), line)
+                raise IndexError("Line too long (%s): %s" % (len(line), line))
 
     def value(self):
         return conv.hl2bs(self._data)
@@ -176,12 +183,12 @@ class LVAR(BMP):
             l = LVAR.length(len(line))
             while len(l) < self.LL:
                 l = [ 0xF0 ] + l
-            if isinstance(line, basestring):
+            if is_stringlike(line):
                 ret += l + conv.bs2hl(line)
             elif isinstance(line, list):
                 ret += l + line
             else:
-                raise TypeError, "Line has unsupported type in LVAR: %s" % type(line)
+                raise TypeError("Line has unsupported type in LVAR: %s" % type(line))
         return ret
 
     def parse(self, data):
@@ -200,7 +207,7 @@ class LVAR(BMP):
     def length(cls, length):
         """
         Returns the length of a_list with BMP.digitize.
-        >>> print [ hex(i) for i in LVAR.length('12345678901234567890') ]
+        >>> print([ hex(i) for i in LVAR.length('12345678901234567890') ])
         ['0xf2', '0xf0']
         """
         return BMP.encode_fcd(length)
@@ -238,7 +245,7 @@ class FixedLength(BMP):
         # first encode our bitmap id.
         if self._id:
             ret = [ self._id ]
-        if isinstance(self._data, basestring):
+        if is_stringlike(self._data):
             ret += [ ord(c) for c in self._data[:self.length]]
         else:
             ret += self._data[:self.length]
@@ -263,7 +270,7 @@ class BCD(FixedLength):
             if t[0] < 10 and t[1] < 10:
                 return (t[0] << 4) + t[1]
             else:
-                raise ValueError, "BCD Unite can only unify two numbers < 10"
+                raise ValueError("BCD Unite can only unify two numbers < 10")
 
     @classmethod
     def decode_bcd(cls, something):
@@ -272,7 +279,7 @@ class BCD(FixedLength):
             @param something: might be a string or list of bytes
             @return: a list of numbers.
         """
-        if isinstance(something, basestring):
+        if is_stringlike(something):
             something = conv.bs2hl(something)
         ret = []
         for x in something:
@@ -288,21 +295,21 @@ class BCD(FixedLength):
             Note: this function fills up numbers missing with 0,
             except you tell strict to be True.
         """
-        if isinstance(something, basestring):
+        if is_stringlike(something):
             # you gave something like "123456"
             something = [ int(x) for x in something ]
         # check the length if even
         if len(something) % 2:
             something = [0] + something
         ret = []
-        for i in xrange(len(something) / 2):
+        for i in range(len(something) // 2):
             ret += [cls.bcd_unite((something[i * 2], something[i * 2 + 1]))]
         return ret
 
     def __init__(self, data=None):
         if isinstance(data, int):
             data = str(data)
-        if isinstance(data, basestring):
+        if is_stringlike(data):
             # this bcd got instantiated with a value. lets parse it.
             self._data = BCD.encode_bcd(data)
             data = None

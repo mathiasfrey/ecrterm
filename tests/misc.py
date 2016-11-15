@@ -43,7 +43,7 @@ class TestSequenceFunctions(unittest.TestCase):
         b._id = 666 # this is actually impossible, but manually valid.
         d = b.dump()
         self.assertEqual(d,
-                         [666, 00, 00, 01])
+                         [666, 0, 0, 1])
 
 
     def test_bmp(self):

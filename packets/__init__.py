@@ -4,5 +4,5 @@
     
     @author g4b
 """
-from base_packets import *
+from ecrterm.packets.base_packets import *
 
