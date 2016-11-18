@@ -149,12 +149,18 @@ class ECR(object):
         else:
             raise Exception("ECR could not connect.")
 
-    def register(self):
+    def register(self, config_byte):
         """
             registers this ECR at the PT, locking menus
             for real world conditions.
         """
-        ret = self.transmit(Registration(password=self.password))
+        kwargs = {}
+        if self.password:
+            kwargs['password'] = self.password
+        if config_byte is not None:
+            kwargs['config_byte'] = config_byte
+
+        ret = self.transmit(Registration(**kwargs))
         
         if ret == TRANSMIT_OK:
             # get the terminal-id if its there.
