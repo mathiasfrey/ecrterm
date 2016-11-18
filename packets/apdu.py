@@ -102,16 +102,15 @@ class APDUPacket(object):
         # the kwargs are the bitmaps.
         bitmaps = []
         for k, v in kwargs.items():
-            key, klass, info = BITMAPS_ARGS.get(k, (None, None, None))
-            if klass:
-                bmp = klass(v)
-                bmp._id = key
-                bmp._descr = info
-                bitmaps += [ bmp ]
+            if k in self.fixed_arguments:
+                fvalues[k] = v
             else:
-                # maybe arg key?
-                if k in self.fixed_arguments:
-                    fvalues[k] = v
+                key, klass, info = BITMAPS_ARGS.get(k, (None, None, None))
+                if klass:
+                    bmp = klass(v)
+                    bmp._id = key
+                    bmp._descr = info
+                    bitmaps += [ bmp ]
         self.fixed_values = fvalues
         self.args = args or []
         self.kwargs = kwargs or {}
