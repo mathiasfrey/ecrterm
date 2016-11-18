@@ -124,7 +124,7 @@ class ECR(object):
     #!: Last is a short access for transmitter.last if possible.
     last = property(__get_last)
 
-    def __init__(self, device='/dev/ttyUSB0'):
+    def __init__(self, device='/dev/ttyUSB0', password='123456'):
         """
             Initializes an ECR object and connects to the serial device given
             Fails if Serial Device is not found.
@@ -141,6 +141,7 @@ class ECR(object):
         # we save some states here.
         self._state_registered = False
         self._state_connected = False
+        self.password = password
 
         if self.transport.connect():
             self.transmitter = transmission.Transmission(self.transport)
@@ -153,7 +154,7 @@ class ECR(object):
             registers this ECR at the PT, locking menus
             for real world conditions.
         """
-        ret = self.transmit(Registration())
+        ret = self.transmit(Registration(password=self.password))
         
         if ret == TRANSMIT_OK:
             # get the terminal-id if its there.
@@ -173,7 +174,7 @@ class ECR(object):
             do not use in production environment.
         """
         ret = self.transmit(
-                    Registration(
+                    Registration(password=self.password,
                         config_byte=Registration.generate_config(
                             ecr_controls_admin=False),))
         if ret == TRANSMIT_OK:
@@ -209,7 +210,7 @@ class ECR(object):
         #old_histoire = self.transmitter.history
         #self.transmitter.history = []
         # we send the packet
-        result = self.transmit(EndOfDay())
+        result = self.transmit(EndOfDay(self.password))
         # now save the log
         self.daylog = self.last_printout()
         
@@ -316,7 +317,7 @@ class ECR(object):
             to check for the status code:
                 common.TERMINAL_STATUS_CODES.get( status, 'Unknown' )
         """
-        errors = self.transmit(StatusEnquiry())
+        errors = self.transmit(StatusEnquiry(self.password))
         if not errors:
             if isinstance(self.last.completion, Completion):
                 # try to get version
