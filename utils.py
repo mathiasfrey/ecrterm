@@ -49,13 +49,19 @@ def detect_pt(device='/dev/ttyUSB0', timeout=2, silent=True,
     def __detect_pt(port, timeout, ecr):
         e = ecr or ECR(port)
         # reconnect to have lower timeout
+        e.transport.close()
         e.transport.connect(timeout=timeout)
         errors = e.transmit(packets.StatusEnquiry())
-        if not errors:
-            if isinstance(e.last.completion, packets.Completion):
-                return e.last.completion.fixed_values.get('sw-version', True) or True
-            return True
-        return False
+        try:
+            if not errors:
+                if isinstance(e.last.completion, packets.Completion):
+                    return e.last.completion.fixed_values.get('sw-version', True) or True
+                return True
+            return False
+        finally:
+            # Reset timeout
+            e.transport.close()
+            e.transport.connect()
     if silent:
         try:
             return __detect_pt(device, timeout, ecr)

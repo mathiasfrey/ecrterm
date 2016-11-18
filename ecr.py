@@ -392,7 +392,6 @@ class ECR(object):
         # note: this only executes utils.detect_pt with the local ecrterm.
         from ecrterm.utils import detect_pt
         result = detect_pt(silent=False, ecr=self, timeout=2)
-        self.transport.connect()
         return result
 
     def parse_str(self, s):
