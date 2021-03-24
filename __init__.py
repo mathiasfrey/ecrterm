@@ -1,4 +1,1 @@
-import common
-import conv
-import crc
-import ecr
+from ecrterm import common, conv, crc, ecr

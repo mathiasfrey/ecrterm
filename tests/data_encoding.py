@@ -15,7 +15,6 @@
 import unittest
 #import sys
 #sys.path.insert(0, '..')
-from ecrterm.packets.bmp import *
 from ecrterm.packets import *
 from ecrterm.transmission import SerialMessage, ACK, NAK
 from ecrterm import conv

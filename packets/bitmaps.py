@@ -94,5 +94,5 @@ if __name__ == '__main__':
     from pprint import pprint
     pprint(BITMAPS_ARGS)
     if len(test_keys) != len(set(test_keys)):
-        print "#" * 80
-        raise Exception, "Duplicate Keys in BITMAPS_ARGS, please check."
+        print("#" * 80)
+        raise Exception("Duplicate Keys in BITMAPS_ARGS, please check.")

@@ -273,7 +273,7 @@ class Logling(object):
         a simple log interface
     """
     def log(self, *args, **kwargs):
-        print " ".join(args)
+        print(" ".join(args))
 
 class Dumpling(object):
     """

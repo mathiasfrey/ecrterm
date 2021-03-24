@@ -9,21 +9,22 @@
 """
 
 from ecrterm import crc, conv, common
-from ecrterm.packets.apdu import APDUPacket, Packets
+from ecrterm.packets.apdu import APDUPacket
+from ecrterm.utils import is_stringlike, ensure_bytes
 import os, serial, select, time#@UnresolvedImport
 from ecrterm.transmission.signals import *
 
 SERIAL_DEBUG = False
 def std_serial_log(instance, data, incoming=False):
     try:
-        if isinstance(incoming, basestring):
+        if is_stringlike(incoming):
             data = conv.bs2hl(data)
         if incoming:
-            print "< %s" % conv.toHexString(data)
+            print("< %s" % conv.toHexString(data))
         else:
-            print "> %s" % conv.toHexString(data)
+            print("> %s" % conv.toHexString(data))
     except:
-        print "| error in log"
+        print("| error in log")
 
 def noop(*args, **kwargs):
     pass
@@ -36,7 +37,7 @@ class SerialMessage(object):
     """
     apdu = None
     def __init__(self, apdu=None):
-        if isinstance(apdu, basestring):
+        if is_stringlike(apdu):
             # try to get the list of bytes.
             apdu = conv.toBytes(apdu.replace(' ', ''))
         elif isinstance(apdu, APDUPacket):
@@ -49,7 +50,7 @@ class SerialMessage(object):
         try:
             return crc.crc_xmodem16(data)
         except:
-            print self.apdu
+            print(self.apdu)
             raise
 
     def _get_crc_l(self):
@@ -133,53 +134,53 @@ class SerialTransport(common.Transport):
             try:
                 self.slog(conv.bs2hl(something))
             finally:
-                self.connection.write(something) # !?
+                self.connection.write(ensure_bytes(something)) # !?
 
     def write_ack(self):
         # writes an ack.
         try:
             self.slog([ACK])
         finally:
-            self.connection.write(chr(ACK))
+            self.connection.write(ensure_bytes(chr(ACK)))
 
     def write_nak(self):
         try:
             self.slog([NAK])
         finally:
-            self.connection.write(chr(NAK))
+            self.connection.write(ensure_bytes(chr(NAK)))
 
     def read(self, timeout=TIMEOUT_T2):
         """
             reads a message packet. any errors are raised directly.
         """
         # if in 5 seconds no message appears, we respond with a nak and raise an error.
-        self.connection.setTimeout(timeout)
+        self.connection.timeout = timeout
         apdu = []
         crc = None
         header = self.connection.read(2)
         header = conv.bs2hl(header)
         # test if there was a transmission:
         if header == []:
-            raise common.TransportLayerException, 'Reading Header Timeout'
+            raise common.TransportLayerException('Reading Header Timeout')
         # test our header to be valid
         if header != [DLE, STX]:
             self.slog(header, True)
-            raise common.TransportLayerException, "Header Error: %s" % header
+            raise common.TransportLayerException("Header Error: %s" % header)
         # read until DLE, ETX is reached.
         dle = False
         # timeout to T1 after header.
-        self.connection.setTimeout(TIMEOUT_T1)
+        self.connection.timeout = TIMEOUT_T1
         while not crc:
             b = ord(self.connection.read(1)) # read a byte.
             if b is None:
                 # timeout
-                raise common.TransportLayerException, "Timeout T1 reading stream."
+                raise common.TransportLayerException("Timeout T1 reading stream.")
             if b == ETX and dle:
                 # dle was set, and this is ETX, so we are at the end.
                 # we read the CRC now.
                 crc = self.connection.read(2)
                 if not crc:
-                    raise common.TransportLayerException, "Timeout T1 reading CRC"
+                    raise common.TransportLayerException("Timeout T1 reading CRC")
                 else:
                     crc = conv.bs2hl(crc)
                 # and break
@@ -195,7 +196,7 @@ class SerialTransport(common.Transport):
             elif dle:
                 # dle was set, but we got no etx here.
                 # this seems to be an error.
-                raise common.TransportLayerException, "DLE without sense detected."
+                raise common.TransportLayerException("DLE without sense detected.")
             # we add this byte to our apdu.
             apdu += [b]
         self.slog(header + apdu + [DLE, ETX] + crc, True)
@@ -205,7 +206,7 @@ class SerialTransport(common.Transport):
         try:
             crc, apdu = self.read(timeout)
             msg = SerialMessage(apdu)
-        except Exception, e:
+        except Exception as e:
             # this is a NAK - re-raise for further investigation.
             self.write_nak()
             raise e
@@ -246,23 +247,23 @@ class SerialTransport(common.Transport):
             acknowledge = self.connection.read(1)
             self.slog(acknowledge, True)
             # if nak, we retry, if ack, we read, if other, we raise.
-            if acknowledge == chr(ACK):
+            if acknowledge == ensure_bytes(chr(ACK)):
                 # everything alright.
                 if not no_wait:
                     return self.receive()
                 return True
-            elif acknowledge == chr(NAK):
+            elif acknowledge == ensure_bytes(chr(NAK)):
                 # not everything allright.
                 #if tries < 3:
                 #    return self.send_message(message, tries + 1, no_answer)
                 #else:
-                raise common.TransportLayerException, "Could not send message"
+                raise common.TransportLayerException("Could not send message")
             elif not acknowledge:
                 # this happens quite a lot with the ingenico devices.
                 # possibly a workaround would be nice.
-                raise common.TransportTimeoutException, "No Answer, Possible Timeout"
+                raise common.TransportTimeoutException("No Answer, Possible Timeout")
             else:
-                raise common.TransportLayerException, "Unknown Acknowledgmenet Byte %s" % conv.bs2hl(acknowledge)
+                raise common.TransportLayerException("Unknown Acknowledgment Byte %s" % conv.bs2hl(acknowledge))
 
     def send(self, apdu, tries=0, no_wait=False):
         """
@@ -275,9 +276,9 @@ if __name__ == '__main__':
     c = SerialTransport('/dev/ttyUSB0')
     from ecrterm.packets.base_packets import Registration
     if c.connect():
-        print "connected to usb0"
+        print("connected to usb0")
     else:
         exit()
     # register
     answer = c.send_serial(Registration())
-    print answer
+    print(answer)

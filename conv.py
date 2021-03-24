@@ -22,6 +22,9 @@ You should have received a copy of the GNU Lesser General Public License
 along with pyscard; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 """
+from functools import reduce
+
+import sys
 
 PACK = 1
 HEX = 2
@@ -91,10 +94,12 @@ def toBytes(bytestring):
     from struct import unpack
     import re
     packedstring = ''.join(re.split('\W+', bytestring))
+    if sys.version_info[0] > 2 and isinstance(packedstring, str):
+        packedstring = packedstring.encode()
     try:
-        return reduce(lambda x, y: x + [int(y, 16)], unpack('2s' * (len(packedstring) / 2), packedstring), [])
+        return reduce(lambda x, y: x + [int(y, 16)], unpack('2s' * (len(packedstring) // 2), packedstring), [])
     except:
-        raise TypeError, 'not a string representing a list of bytes'
+        raise TypeError('not a string representing a list of bytes')
 
 
 """GSM3.38 character conversion table."""
@@ -164,7 +169,7 @@ def toGSM3_38Bytes(stringtoconvert):
     return bytes
 
 
-def toHexString(bytes=[], format=0):
+def toHexString(bytes=None, format=0):
     """Returns an hex string representing bytes
 
         bytes:  a list of bytes to stringify, e.g. [59, 22, 148, 32, 2, 1, 0, 0, 13]
@@ -189,13 +194,19 @@ def toHexString(bytes=[], format=0):
         toHexString(bytes, HEX | UPPERCASE | COMMA) returns  0X3B, 0X65, 0X00, 0X00, 0X9C, 0X11, 0X01, 0X01, 0X03
     """
 
-    from string import rstrip
+    try:
+        from string import rstrip
+    except ImportError: # Python3
+        def rstrip(s, chars=None):
+            return s.rstrip(chars)
+
+    bytes = bytes or []
 
     for byte in tuple(bytes):
         pass
 
     if type(bytes) is not list:
-        raise TypeError, 'not a list of bytes'
+        raise TypeError('not a list of bytes')
 
     if bytes == None or bytes == []:
         return ""
@@ -224,7 +235,7 @@ def HexListToBinString(hexlist):
 def BinStringToHexList(binstring):
     hexlist = []
     for byte in binstring:
-        hexlist = hexlist + [ord(byte)]
+        hexlist = hexlist + [byte if isinstance(byte, int) else ord(byte)]
     return hexlist
 
 
